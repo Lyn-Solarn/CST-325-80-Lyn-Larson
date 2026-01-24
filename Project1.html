@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script>
+        var myCanvas;
+        var sceneList = [];
+        var currentFrameNumber = 0;
+
+        class Rectangle {
+            constructor(x, y, color, velocity) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.velocity = velocity;
+
+                this.draw = function () {
+                    let rectangle = myCanvas.getContext("2d");
+
+                    rectangle.fillStyle = this.color;
+                    rectangle.fillRect(this.x, this.y, 50, 50);
+                    rectangle.strokeRect(this.x, this.y, 50, 50);
+                }
+            }
+        }
+
+        function init() {
+            myCanvas = document.getElementById("canvas");
+
+            updateAndDraw();
+        }
+
+        function updateAndDraw() {
+            const myRectangle = new Rectangle(Math.floor(Math.random() * 300) - 25,
+                                             Math.floor(Math.random() * 200) - 25, 
+                                             `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`);
+            sceneList.push(myRectangle);
+
+            for (let rectangle of sceneList) {
+                rectangle.draw();
+            }
+
+            requestAnimationFrame(updateAndDraw);
+
+            updateStats();
+            currentFrameNumber++;
+        }
+
+        function updateStats() {
+            var p = document.getElementById("frameCount");
+            p.innerText = currentFrameNumber;
+
+            var p = document.getElementById("rectangleCount");
+            p.innerText = sceneList.length;
+        }
+    </script>
+</head>
+
+<body onload="init()">
+
+    <canvas id="canvas" width="300" height="200" style="border:1px solid gray;"></canvas>
+    <br>
+    <button>Change Spawn Color</button>
+
+    <br>
+    <p>Frame Count: <span id="frameCount">0</span></p>
+    <p>Rectangle Count: <span id="rectangleCount">0</span></p>
+
+</body>
+
+</html>
