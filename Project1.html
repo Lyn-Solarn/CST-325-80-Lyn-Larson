@@ -12,11 +12,14 @@
         var currentFrameNumber = 0;
 
         class Rectangle {
-            constructor(x, y, color, velocity) {
+            constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
-                this.velocity = velocity;
+                var velocity = {
+                    x: 0,
+                    y: 0
+                };
 
                 this.draw = function () {
                     let rectangle = myCanvas.getContext("2d");
@@ -24,6 +27,11 @@
                     rectangle.fillStyle = this.color;
                     rectangle.fillRect(this.x, this.y, 50, 50);
                     rectangle.strokeRect(this.x, this.y, 50, 50);
+                }
+
+                this.update = function() {
+                    velocity.y++;
+                    this.y = this.y + velocity.y * 0.16;
                 }
             }
         }
@@ -35,13 +43,22 @@
         }
 
         function updateAndDraw() {
-            const myRectangle = new Rectangle(Math.floor(Math.random() * 300) - 25,
-                                             Math.floor(Math.random() * 200) - 25, 
+            const clear = canvas.getContext('2d');
+            clear.clearRect(0, 0, 500, 450);
+
+            const myRectangle = new Rectangle(Math.floor(Math.random() * 500) - 25,
+                                             Math.floor(Math.random() * 450) - 25, 
                                              `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`);
             sceneList.push(myRectangle);
 
             for (let rectangle of sceneList) {
+                rectangle.update();
                 rectangle.draw();
+
+                if (rectangle.y > 500) {
+                    let index = sceneList.indexOf(rectangle);
+                    sceneList.splice(index, 1);
+                }
             }
 
             requestAnimationFrame(updateAndDraw);
@@ -62,9 +79,7 @@
 
 <body onload="init()">
 
-    <canvas id="canvas" width="300" height="200" style="border:1px solid gray;"></canvas>
-    <br>
-    <button>Change Spawn Color</button>
+    <canvas id="canvas" width="500" height="450" style="border:1px solid gray;"></canvas>
 
     <br>
     <p>Frame Count: <span id="frameCount">0</span></p>
