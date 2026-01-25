@@ -8,6 +8,10 @@
 
     <script>
         var myCanvas;
+        var canvasSize = {
+            width: 600,
+            height: 400
+        };
         var sceneList = [];
         var currentFrameNumber = 0;
 
@@ -25,8 +29,8 @@
                     let rectangle = myCanvas.getContext("2d");
 
                     rectangle.fillStyle = this.color;
-                    rectangle.fillRect(this.x, this.y, 50, 50);
-                    rectangle.strokeRect(this.x, this.y, 50, 50);
+                    rectangle.fillRect(this.x, this.y, 75, 75);
+                    rectangle.strokeRect(this.x, this.y, 75, 75);
                 }
 
                 this.update = function() {
@@ -38,16 +42,18 @@
 
         function init() {
             myCanvas = document.getElementById("canvas");
+            myCanvas.setAttribute("width", canvasSize.width);
+            myCanvas.setAttribute("height", canvasSize.height);
 
             updateAndDraw();
         }
 
         function updateAndDraw() {
             const clear = canvas.getContext('2d');
-            clear.clearRect(0, 0, 500, 450);
+            clear.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-            const myRectangle = new Rectangle(Math.floor(Math.random() * 500) - 25,
-                                             Math.floor(Math.random() * 450) - 25, 
+            const myRectangle = new Rectangle(Math.floor(Math.random() * canvasSize.width) - 25,
+                                             Math.floor(Math.random() * canvasSize.height) - 25, 
                                              `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`);
             sceneList.push(myRectangle);
 
@@ -55,7 +61,7 @@
                 rectangle.update();
                 rectangle.draw();
 
-                if (rectangle.y > 500) {
+                if (rectangle.y > canvasSize.height) {
                     let index = sceneList.indexOf(rectangle);
                     sceneList.splice(index, 1);
                 }
@@ -79,7 +85,7 @@
 
 <body onload="init()">
 
-    <canvas id="canvas" width="500" height="450" style="border:1px solid gray;"></canvas>
+    <canvas id="canvas" style="border:1px solid gray;"></canvas>
 
     <br>
     <p>Frame Count: <span id="frameCount">0</span></p>
