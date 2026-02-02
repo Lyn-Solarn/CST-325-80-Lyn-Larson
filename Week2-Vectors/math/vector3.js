@@ -52,18 +52,18 @@ class Vector3 {
 
     //----------------------------------------------------------------------------- 
     add(v) {
-        this.x = this.x + v;
-        this.y = this.y + v;
-        this.z = this.z + v;
+        this.x = this.x + v.x;
+        this.y = this.y + v.y;
+        this.z = this.z + v.z;
         // This SHOULD change the values of this.x, this.y, and this.z
         return this;
     }
 
     //----------------------------------------------------------------------------- 
     subtract(v) {
-        this.x -= v;
-        this.y -= v;
-        this.z -= v;
+        this.x -= v.x;
+        this.y -= v.y;
+        this.z -= v.z;
         // This SHOULD change the values of this.x, this.y, and this.z
         return this;
     }
