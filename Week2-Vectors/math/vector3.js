@@ -178,16 +178,39 @@ class Vector3 {
 
     //----------------------------------------------------------------------------- 
     static angle(v1, v2) {
-        // todo - calculate the angle in degrees between vectors v1 and v2. Do NOT
-        //        change any values on the vectors themselves
+        // calculate the angle in degrees between vectors v1 and v2
+        // Do NOT change any values on the vectors themselves
+
+        let dot = v1.dot(v2);
+        let lengths = v1.length() * v2.length();
+        
+        if (lengths > 0) {
+            let cosAngle = dot / lengths;
+            let angleInRadians = Math.acos(cosAngle);
+            let angleInDegrees = angleInRadians * (180 / Math.PI);
+            return angleInDegrees;
+        }
+
         return 0;
     }
 
     //----------------------------------------------------------------------------- 
     static project(vectorToProject, otherVector) {
-        // todo - return a vector that points in the same direction as "otherVector"
-        //        but whose length is the projection of "vectorToProject" onto "otherVector"
-        //        NOTE - "vectorToProject" and "otherVector" should NOT be altered (i.e. use clone)
-        //        See "Vector Projection Slides" under "Extras" for more info.
+        // return a vector that points in the same direction as "otherVector"
+        // but whose length is the projection of "vectorToProject" onto "otherVector"
+        // NOTE - neither input vector should be altered
+
+        let otherLengthSqr = otherVector.lengthSqr();
+
+        if (otherLengthSqr > 0) {
+            let scale = vectorToProject.dot(otherVector) / otherLengthSqr;
+
+            let result = otherVector.clone();
+            result.multiplyScalar(scale);
+
+            return result;
+        }
+
+        return new Vector3();
     }
 }
