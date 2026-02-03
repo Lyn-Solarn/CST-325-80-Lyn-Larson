@@ -117,11 +117,17 @@ class Vector3 {
     normalize() {
         // todo - Change the components of this vector so that its magnitude will equal 1.
         // This SHOULD change the values of this.x, this.y, and this.z
-        this.x = this.x / this.length(this);
-        this.y = this.y / this.length(this);
-        this.z = this.z / this.length(this);
-        console.log(this)
-        console.log(this.length())
+        let lengthSqr = this.lengthSqr();
+        let ogXSquared = this.x * this.x;
+        let ogYSquared = this.y * this.y;
+        let ogZSquared = this.z * this.z;
+
+        if (this.length() > 0) {
+            this.x = Math.sqrt(ogXSquared / lengthSqr);
+            this.y = Math.sqrt(ogYSquared / lengthSqr);
+            this.z = Math.sqrt(ogZSquared / lengthSqr);
+        }
+
         return this;
     }
 
@@ -144,7 +150,14 @@ class Vector3 {
 
     //----------------------------------------------------------------------------- 
     rescale(newScale) {
-        // todo - Change this vector's length to be newScale
+        // Change this vector's length to be newScale
+        let length = this.length();
+
+        if (length > 0) {
+            this.normalize();
+            this.multiplyScalar(newScale);
+        }
+
         return this;
     }
 
@@ -153,8 +166,14 @@ class Vector3 {
         if (!(fromPoint instanceof Vector3) || !(toPoint instanceof Vector3)) {
             console.error("fromTo requires two vectors: 'from' and 'to'");
         }
-        // todo - return the vector that goes from "fromPoint" to "toPoint"
-        //        NOTE - "fromPoint" and "toPoint" should not be altered
+
+        let result = new Vector3();
+
+        result.x = toPoint.x - fromPoint.x;
+        result.y = toPoint.y - fromPoint.y;
+        result.z = toPoint.z - fromPoint.z;
+
+        return result;
     }
 
     //----------------------------------------------------------------------------- 
