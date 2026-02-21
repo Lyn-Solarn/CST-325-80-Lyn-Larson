@@ -167,9 +167,13 @@ function setPixelColor(xPixelIndex, yPixelIndex, shadeOfGray /*[0,1]*/) {
 // 	requestAnimationFrame(updateAndRender);
 // }
 
-const lightPosition = new Vector3(1, 0, 0);
+let lightPos = new Vector3(0.5, 0, 0);
 
 function updateAndRender(timeElapsed) {
+  var seconds = timeElapsed * 0.001; // convert milliseconds to seconds
+  lightPos.x = Math.cos(seconds) * 0.5; // radius of 0.5
+  lightPos.z = Math.sin(seconds) * 0.5; // radius of 0.5
+
    // Go through every pixel
    // NOTE! You should only call setPixelColor once per pixel.  Otherwise, the
    // last time you call it will be the color and overwrite previous calls.
@@ -200,14 +204,23 @@ function updateAndRender(timeElapsed) {
       let shade = 0.1; // default
 
       if (closestHit) {
+        const surfacePoint = closestHit.point.clone();
+        const normal = closestHit.normal.clone().normalize();
 
         // Direction from intersection point to light
-        const lightDir = Vector3
-          .fromTo(closestHit.point, lightPosition)
-          .normalize();
+        const toLight = Vector3.fromTo(surfacePoint, lightPos);
+        const lightDistance = toLight.length();
+        const lightDir = toLight.clone().normalize();
 
-        // Make sure normal is normalized (should already be)
-        const normal = closestHit.normal.clone().normalize();
+        const shadowOrigin = surfacePoint.clone().add(normal.clone().multiplyScalar(0.001));
+        const shadowRay = new Ray(shadowOrigin, lightDir);
+
+        const shadowSphere = sphere.raycast(shadowRay);
+        const shadowPlane = plane.raycast(shadowRay);
+
+        const blockedBySphere = shadowSphere.hit && shadowSphere.distance < lightDistance;
+        const blockedByPlane = shadowPlane.hit && shadowPlane.distance < lightDistance;
+        const inShadow = blockedBySphere || blockedByPlane;
 
         // Lambertian diffuse thingie
         let diffuse = normal.dot(lightDir);
@@ -215,7 +228,7 @@ function updateAndRender(timeElapsed) {
         // Clamp negative values (light behind surface?)
         diffuse = Math.max(0, diffuse);
 
-        shade = diffuse;
+        shade = inShadow ? 0 : diffuse;
       }
 
       setPixelColor(x, y, shade);
