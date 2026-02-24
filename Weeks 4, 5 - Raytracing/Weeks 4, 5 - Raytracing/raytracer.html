@@ -69,6 +69,12 @@ let eyeCoordinate = new Vector3(0, 0, eyeDistance); // todo -> set this after ey
 
 let sphere = new Sphere(new Vector3(0, 0, 0), 0.25); // todo = new Sphere(..., ...);
 let plane = new Plane(new Vector3(0, 1, 0,), new Vector3(0, -0.25, 0)); // todo = new Plane(..., ...);
+var leftWall = new Plane(new Vector3(1, 0, 0), new Vector3(-1, 0, 0), new Vector3(1, 0, 0));   // validPoint => (-1, 0, 0)
+var rightWall = new Plane(new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0)); // validPoint => (1, 0, 0)
+var ceiling = new Plane(new Vector3(0, -1, 0), new Vector3(0, 1, 0), new Vector3(1, 1, 1));   // validPoint => (0, 1, 0)
+var backWall = new Plane(new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(1, 1, 1));  // validPoint => (0, 0, -1)
+
+var scene = [sphere, ceiling, plane, leftWall, rightWall, backWall];
 
 // end of raytracer setup ******************************************************
 
@@ -79,93 +85,25 @@ function generateRayForPixel(xPixelIndex, yPixelIndex) {
 	const pixelY = 1 - pixelHalfWidth - pixelWidth * yPixelIndex;
 	const pixelCoordinate = new Vector3(pixelX, pixelY, 0);
 
-	let direction = Vector3.fromTo(eyeCoordinate, pixelCoordinate);// = vector from the eye to the pixel
+	//let direction = Vector3.fromTo(eyeCoordinate, pixelCoordinate);// = vector from the eye to the pixel
 
+  let direction = Vector3.fromTo(eyeCoordinate, pixelCoordinate).normalize();
 	// Creates a ray from the eye toward the pixelCoordinate
 	let pixelRay = new Ray(eyeCoordinate, direction); // = new Ray(...);
 	return pixelRay;
+
+  
+  return new Ray(eyeCoordinate, direction);
 }
 
 // -----------------------------------------------------------------------------
-function setPixelColor(xPixelIndex, yPixelIndex, shadeOfGray /*[0,1]*/) {
+function setPixelColor(xPixelIndex, yPixelIndex, color /*[0,1]*/) {
 	const index = (yPixelIndex * pixelsAcross + xPixelIndex) * 4; // 4 bytes per pixel
-	imageData.data[index + 0] = shadeOfGray * 255; // red channel
-	imageData.data[index + 1] = shadeOfGray * 255; // green channel
-	imageData.data[index + 2] = shadeOfGray * 255; // blue channel
+	imageData.data[index + 0] = color.x * 255; // red channel
+	imageData.data[index + 1] = color.y * 255; // green channel
+	imageData.data[index + 2] = color.z * 255; // blue channel
 	imageData.data[index + 3] = 255;
 }
-
-// -----------------------------------------------------------------------------
-// function updateAndRender(timeElapsed) {
-// 	for (let yPixelIndex = 0; yPixelIndex < pixelsDown; ++yPixelIndex) {
-// 		for (let xPixelIndex = 0; xPixelIndex < pixelsAcross; ++xPixelIndex) {
-// 			let shadeOfGray = 0.1; // default background color
-// 			let pixelColor = new Vector3(0, 0, 0); // default background color
-// 			let hitSomething = false; // default to not hitting anything
-// 			const ray = generateRayForPixel(xPixelIndex, yPixelIndex);
-
-// 			setPixelColor(xPixelIndex, yPixelIndex, shadeOfGray); // default background color
-
-// 			if (sphere.raycast(ray).hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.5); // middle gray
-// 			} else if (plane.raycast(ray).hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.5); // middle gray
-// 			} else {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.1); // dark gray
-// 			}
-
-// 			if (hitSomething) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, shadeOfGray); // middle gray
-// 			} else {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.1); // dark gray
-// 			}
-
-// 			const raycastResult = sphere.raycast(ray);
-// 			if (raycastResult.hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.5); // middle gray
-// 			} else {
-// 				const planeResult = plane.raycast(ray);
-// 				if (planeResult.hit) {
-// 					setPixelColor(xPixelIndex, yPixelIndex, 0.5); // middle gray
-// 				} else {
-// 					setPixelColor(xPixelIndex, yPixelIndex, 0.1); // dark gray
-// 				}
-// 			}
-
-
-// 			// Uncomment this once you've coded generateRayForPixel
-// 			const pixelRay = generateRayForPixel(xPixelIndex, yPixelIndex);
-
-// 			// See if the ray intersects the sphere or the plane (or every object in our scene)
-// 			// Uncomment when your sphere or plane code is ready
-// 			const sphereResult = sphere.raycast(pixelRay);
-// 			const planeResult = plane.raycast(pixelRay);
-
-// 			// determine which hit object is the closest (in case there is more than 1 hit)
-
-// 			if (sphereResult.hit && planeResult.hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.1); // middle gray
-// 			} else if (sphereResult.hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.2); // middle gray
-// 				// shadeOfGray = 0.5; // middle gray
-// 				// hitSomething = true;
-// 			} else if (planeResult.hit) {
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.2); // middle gray
-// 				// shadeOfGray = 0.5; // middle gray
-// 				// hitSomething = true;
-// 			} else {
-// 				// we didn't hit anything, choose an appropriate background color
-// 				setPixelColor(xPixelIndex, yPixelIndex, 0.5); // dark gray
-// 			}
-// 		}
-// 	}
-
-// 	// Take our array of color data and give to the canvas to display
-// 	canvasContext.putImageData(imageData, 0, 0);
-
-// 	// Let the browser know it should call this function again when it's time to render
-// 	requestAnimationFrame(updateAndRender);
-// }
 
 let lightPos = new Vector3(0.5, 0, 0);
 
@@ -185,53 +123,109 @@ function updateAndRender(timeElapsed) {
 
       const sphereHit = sphere.raycast(ray);
       const planeHit  = plane.raycast(ray);
+      const leftWallHit = leftWall.raycast(ray);
+      const rightWallHit = rightWall.raycast(ray);
+      const ceilingHit = ceiling.raycast(ray);
+      const backWallHit = backWall.raycast(ray);
+
+      // Find closest hit in the whole scene
 
       let closestHit = null;
+      let closestObj = null;
+      let closestDist = Infinity;
 
-      // Determine closest object hit
-      if (sphereHit.hit && planeHit.hit) {
-        closestHit = (sphereHit.distance < planeHit.distance)
-          ? sphereHit
-          : planeHit;
-      } 
-      else if (sphereHit.hit) {
-        closestHit = sphereHit;
-      } 
-      else if (planeHit.hit) {
-        closestHit = planeHit;
+      for (const obj of scene) {
+        const h = obj.raycast(ray);
+        if (h.hit && h.distance < closestDist) {
+          closestDist = h.distance;
+          closestHit = h;
+          closestObj = obj;
+        }
       }
 
-      let shade = 0.1; // default
 
-      if (closestHit) {
-        const surfacePoint = closestHit.point.clone();
-        const normal = closestHit.normal.clone().normalize();
+      let color = new Vector3(0.1, 0.1, 0.1); // default
 
-        // Direction from intersection point to light
-        const toLight = Vector3.fromTo(surfacePoint, lightPos);
-        const lightDistance = toLight.length();
-        const lightDir = toLight.clone().normalize();
+      // todo -> use the raycast results to determine the final color of the pixel
+      let finalColor = new Vector3(0.05, 0.05, 0.08);
 
-        const shadowOrigin = surfacePoint.clone().add(normal.clone().multiplyScalar(0.001));
-        const shadowRay = new Ray(shadowOrigin, lightDir);
+      if (closestHit && closestObj) {
+        // 1) get base color from sphere/plane directly when hit
+        let baseColor = new Vector3(0.8, 0.8, 0.8); // fallback
+        if (closestObj === sphere && sphere.color instanceof Vector3) {
+          baseColor = sphere.color.clone();
+        } else if (closestObj === plane && plane.color instanceof Vector3) {
+          baseColor = plane.color.clone();
+        } else {
+        // per-wall or other defaults (adjust as you like)
+          if (closestObj === leftWall)  baseColor = leftWall.color.clone();
+          if (closestObj === rightWall) baseColor = rightWall.color.clone();
+          if (closestObj === ceiling)   baseColor = ceiling.color.clone();
+          if (closestObj === backWall)  baseColor = backWall.color.clone();
+        }
 
-        const shadowSphere = sphere.raycast(shadowRay);
-        const shadowPlane = plane.raycast(shadowRay);
+        // 2) lighting params (tweak to taste)
+        const ambientStrength = 0.30;   // increase to brighten shadows
+        const lightIntensity  = 1.6;    // brightness of light
+        const specularStrength = 0.5;
+        const shininess = 20;
+        const exposure = 0.5;
+        const gamma = 2.0;
 
-        const blockedBySphere = shadowSphere.hit && shadowSphere.distance < lightDistance;
-        const blockedByPlane = shadowPlane.hit && shadowPlane.distance < lightDistance;
-        const inShadow = blockedBySphere || blockedByPlane;
+        // 3) geometry
+        const P = closestHit.point.clone();
+        const N = closestHit.normal.clone().normalize();
 
-        // Lambertian diffuse thingie
-        let diffuse = normal.dot(lightDir);
+        // use your existing lightPos if present, otherwise (1,0,0)
+        const lp = (typeof lightPos !== "undefined") ? lightPos.clone() : new Vector3(1, 0, 0);
+        const toLight = Vector3.fromTo(P, lp);
+        const lightDist = toLight.length();
+        const L = toLight.clone().normalize();
 
-        // Clamp negative values (light behind surface?)
-        diffuse = Math.max(0, diffuse);
+        // 4) shadow test against all scene objects
+        const shadowOrigin = P.clone().add(N.clone().multiplyScalar(1e-4)); // avoid self hit
+        const shadowRay = new Ray(shadowOrigin, L);
+        let inShadow = false;
+        for (const obj of scene) {
+          const sh = obj.raycast(shadowRay);
+          if (sh.hit && sh.distance > 1e-5 && sh.distance < lightDist - 1e-5) { inShadow = true; break; }
+        }
 
-        shade = inShadow ? 0 : diffuse;
+        // 5) diffuse & specular
+        let diffuse = Math.max(0, N.dot(L)) * lightIntensity;
+        if (inShadow) diffuse *= 0.15; // keep small diffuse when shadowed
+
+        const eyePos = (typeof eye !== "undefined") ? eye.clone() : ((typeof camera !== "undefined") ? camera.clone() : new Vector3(0,0,0));
+        const V = Vector3.fromTo(P, eyePos).normalize();
+        const negL = L.clone().negate();
+        const R = negL.clone().subtract(N.clone().multiplyScalar(2 * negL.dot(N))).normalize();
+        let spec = Math.pow(Math.max(0, R.dot(V)), shininess) * specularStrength;
+        if (inShadow) spec *= 0.2;
+
+        // 6) combine components
+        const ambient = baseColor.clone().multiplyScalar(ambientStrength);
+        const diffuseColor = baseColor.clone().multiplyScalar(diffuse);
+        const specColor = new Vector3(1,1,1).multiplyScalar(spec);
+
+        finalColor = ambient.add(diffuseColor).add(specColor);
+
+        // 7) exposure, clamp, gamma
+        finalColor = finalColor.multiplyScalar(exposure);
+        finalColor.x = Math.min(1, Math.max(0, finalColor.x));
+        finalColor.y = Math.min(1, Math.max(0, finalColor.y));
+        finalColor.z = Math.min(1, Math.max(0, finalColor.z));
+        finalColor.x = Math.pow(finalColor.x, 1/gamma);
+        finalColor.y = Math.pow(finalColor.y, 1/gamma);
+        finalColor.z = Math.pow(finalColor.z, 1/gamma);
+      }else {
+        // background color (adjust as you like)
+        finalColor = new Vector3(0.05, 0.05, 0.08);
       }
 
-      setPixelColor(x, y, shade);
+      // final: send a Vector3 color (0..1) to setPixelColor
+      setPixelColor(x, y, finalColor);
+
+
     }
   }
 
