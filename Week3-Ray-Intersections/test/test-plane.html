@@ -72,6 +72,7 @@
                 var p3 = new Plane(new Vector3(0, 0, -1), new Vector3(0, 0, 2));
                 var r1 = new Ray(new Vector3(0, 0, -10), new Vector3(0, 0, 1));
                 var castResult1 = p3.raycast(r1);
+                console.log(castResult1);
                 assert(castResult1.hit === true, "Typical Valid Intersection Success");
                 assert(vectorEqual(castResult1.point, 0, 0, 2), "Typical Valid Intersection Point");
                 assert(vectorEqual(castResult1.normal, 0, 0, -1), "Typical Valid Intersection Normal");

@@ -176,6 +176,8 @@ function sphereEqual(sphere, x, y, z, radius) {
         throw new Error('Invalid sphere passed to sphereEqual.');
     }
 
+    console.log(`Comparing sphere center (${sphere.center.x}, ${sphere.center.y}, ${sphere.center.z}) with expected (${x}, ${y}, ${z}) and radius ${sphere.radius} with expected ${radius}`);
+
     return floatEqual(sphere.center.x, x) &&
            floatEqual(sphere.center.y, y) &&
            floatEqual(sphere.center.z, z) &&
