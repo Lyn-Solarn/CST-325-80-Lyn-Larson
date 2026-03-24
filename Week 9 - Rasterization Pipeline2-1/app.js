@@ -110,11 +110,14 @@ function updateAndRender() {
     gl.uniform4f(colorProgram.uniforms.colorUniform, 0.5, 0.5, 0.5, 1.0);
     groundGeometry.render(camera, projectionMatrix, colorProgram);
 
-    // todo #5 - change color for the sphere
-    gl.uniform4f(colorProgram.uniforms.colorUniform, 1, 1, 1, 1.0);
+    // todo #9 - animate the color of the sphere (convert -1..1 -> 0..1)
+    const oscillating01 = (Math.sin(time.secondsElapsedSinceStart) + 1.0) * 0.5;
 
-    // todo #9 - animate the color of there sphere
-    // todo #10 - animate the color with non-grayscale values
+    // todo #10 - animate with non-grayscale values by phase-shifting channels
+    const r = oscillating01;
+    const g = (Math.sin(time.secondsElapsedSinceStart + (2.0 * Math.PI / 3.0)) + 1.0) * 0.5;
+    const b = (Math.sin(time.secondsElapsedSinceStart + (4.0 * Math.PI / 3.0)) + 1.0) * 0.5;
+    gl.uniform4f(colorProgram.uniforms.colorUniform, r, g, b, 1.0);
 
     // todo #3 - render the sphere
     sphereGeometry.render(camera, projectionMatrix, colorProgram);

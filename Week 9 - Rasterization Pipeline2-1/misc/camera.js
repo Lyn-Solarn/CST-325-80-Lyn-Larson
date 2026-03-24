@@ -48,19 +48,12 @@ class Camera {
 
     if (this.input.left) {
       // todo #8 - add a little bit to the current camera yaw
-      let leftRotation = currentForward.clone().multiplyScalar(0.0001);
-      this.cameraYaw = this.cameraPosition.clone().add(leftRotation);
-      console.log(this.cameraYaw);
-      console.log(this.cameraWorldMatrix);
+      this.cameraYaw += 0.1;
     }
 
     if (this.input.right) {
       // todo #8 - subtract a little bit from the current camera yaw
-      let rightRotation = currentForward.clone().multiplyScalar(-0.0001);
-      this.cameraYaw = this.cameraPosition.clone().add(rightRotation);
-      console.log(this.cameraYaw);
-      console.log(this.cameraWorldMatrix);
-
+      this.cameraYaw -= 0.1;
     }
 
     // todo #7 - create the cameraWorldMatrix from scratch based on this.cameraPosition
