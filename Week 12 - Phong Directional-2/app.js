@@ -9,6 +9,9 @@ const assetLoader = new AssetLoader();
 
 let sphereGeometry = null; // this will be created after loading from a file
 let groundGeometry = null;
+let barrelGeometry = null;
+let lightSphereGeometry = null;
+let flatColorShaderProgram;
 
 const projectionMatrix = new Matrix4();
 const lightPosition = new Vector4(4, 1.5, 0, 1);
@@ -23,9 +26,16 @@ window.onload = window['initializeAndStartRendering'];
 const assetList = [
     { name: 'phongTextVS', url: './shaders/phong.vs.glsl', type: 'text' },
     { name: 'phongTextFS', url: './shaders/phong.pointlit.fs.glsl', type: 'text' },
+    { name: 'flatColorVS', url: './shaders/flat.color.vs.glsl', type: 'text' },
+    { name: 'flatColorFS', url: './shaders/flat.color.fs.glsl', type: 'text' },
+    { name: 'spotVS', url: './shaders/phong.vs.glsl', type: 'text' },  // reuse same VS
+    { name: 'spotFS', url: './shaders/phong.spot.fs.glsl', type: 'text' },
     { name: 'sphereJSON', url: './data/sphere.json', type: 'json' },
     { name: 'marbleImage', url: './data/marble.jpg', type: 'image' },
-    { name: 'crackedMudImage', url: './data/crackedmud.png', type: 'image' }
+    { name: 'crackedMudImage', url: './data/crackedmud.png', type: 'image' },
+    { name: 'barrelImage', url: './data/barrel.png', type: 'image' },
+    { name: 'barrelJSON', url: './data/barrel.json', type: 'json' }
+    
 ];
 
 let yaw = 0;
@@ -64,7 +74,51 @@ function createShaders() {
         lightPositionUniform: gl.getUniformLocation(phongShaderProgram, "uLightPosition"),
         cameraPositionUniform: gl.getUniformLocation(phongShaderProgram, "uCameraPosition"),
         textureUniform: gl.getUniformLocation(phongShaderProgram, "uTexture"),
+        spotLightPositionUniform:  gl.getUniformLocation(phongShaderProgram, "uSpotLightPosition"),
+        spotLightDirectionUniform: gl.getUniformLocation(phongShaderProgram, "uSpotLightDirection"),
+        innerLimitUniform:         gl.getUniformLocation(phongShaderProgram, "uInnerLimit"),
+        outerLimitUniform:         gl.getUniformLocation(phongShaderProgram, "uOuterLimit"),
+
     };
+
+    // Flat color shader
+    const flatColorVS = assetLoader.assets.flatColorVS;
+    const flatColorFS = assetLoader.assets.flatColorFS;
+
+    flatColorShaderProgram = createCompiledAndLinkedShaderProgram(gl, flatColorVS, flatColorFS);
+
+    flatColorShaderProgram.attributes = {
+        vertexPositionAttribute: gl.getAttribLocation(flatColorShaderProgram, "aVertexPosition"),
+    };
+
+    flatColorShaderProgram.uniforms = {
+        worldMatrixUniform:      gl.getUniformLocation(flatColorShaderProgram, "uWorldMatrix"),
+        viewMatrixUniform:       gl.getUniformLocation(flatColorShaderProgram, "uViewMatrix"),
+        projectionMatrixUniform: gl.getUniformLocation(flatColorShaderProgram, "uProjectionMatrix"),
+        colorUniform:            gl.getUniformLocation(flatColorShaderProgram, "uColor"),
+    };
+
+    // let spotShaderProgram = createCompiledAndLinkedShaderProgram(
+    // gl, assetLoader.assets.spotVS, assetLoader.assets.spotFS
+    // );
+
+    // spotShaderProgram.attributes = {
+    //     vertexPositionAttribute: gl.getAttribLocation(spotShaderProgram, "aVertexPosition"),
+    //     vertexNormalsAttribute:  gl.getAttribLocation(spotShaderProgram, "aNormal"),
+    //     vertexTexcoordsAttribute: gl.getAttribLocation(spotShaderProgram, "aTexcoords")
+    // };
+
+    // spotShaderProgram.uniforms = {
+    //     worldMatrixUniform:      gl.getUniformLocation(spotShaderProgram, "uWorldMatrix"),
+    //     viewMatrixUniform:       gl.getUniformLocation(spotShaderProgram, "uViewMatrix"),
+    //     projectionMatrixUniform: gl.getUniformLocation(spotShaderProgram, "uProjectionMatrix"),
+    //     lightPositionUniform:    gl.getUniformLocation(spotShaderProgram, "uLightPosition"),
+    //     cameraPositionUniform:   gl.getUniformLocation(spotShaderProgram, "uCameraPosition"),
+    //     textureUniform:          gl.getUniformLocation(spotShaderProgram, "uTexture"),
+    //     lightDirectionUniform:   gl.getUniformLocation(spotShaderProgram, "uLightDirection"),
+    //     innerLimitUniform:       gl.getUniformLocation(spotShaderProgram, "uInnerLimit"),
+    //     outerLimitUniform:       gl.getUniformLocation(spotShaderProgram, "uOuterLimit"),
+    // };
 }
 
 // -------------------------------------------------------------------------
@@ -91,6 +145,25 @@ function createScene() {
 
     sphereGeometry.worldMatrix.makeIdentity();
     sphereGeometry.worldMatrix.multiply(translation).multiply(scale);
+
+    barrelGeometry = new WebGLGeometryJSON(gl, phongShaderProgram);
+    barrelGeometry.create(assetLoader.assets.barrelJSON, assetLoader.assets.barrelImage);
+
+    // Scaled it down so that the diameter is 3
+    scale = new Matrix4().makeScale(0.3, 0.3, 0.3);
+
+    // raise it by the radius to make it sit on the ground
+    translation = new Matrix4().makeTranslation(-5, 2, -5);
+
+    barrelGeometry.worldMatrix.makeIdentity();
+    barrelGeometry.worldMatrix.multiply(translation).multiply(scale);
+
+    lightSphereGeometry = new WebGLGeometryJSON(gl, flatColorShaderProgram);
+    lightSphereGeometry.create(assetLoader.assets.sphereJSON, null); // no texture needed
+
+    const lightScale = new Matrix4().makeScale(0.005, 0.005, 0.005); // small sphere
+    lightSphereGeometry.worldMatrix.makeIdentity();
+    lightSphereGeometry.worldMatrix.multiply(lightScale);
 
 }
 
@@ -126,13 +199,51 @@ function updateAndRender() {
     gl.clearColor(0.707, 0.707, 1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    // Update light sphere position to match the rotated light
+    const lightSphereTranslation = new Matrix4().makeTranslation(
+        rotatedLightPosition.x,
+        rotatedLightPosition.y,
+        rotatedLightPosition.z
+    );
+    const lightSphereScale = new Matrix4().makeScale(0.005, 0.005, 0.005);
+    lightSphereGeometry.worldMatrix.makeIdentity();
+    lightSphereGeometry.worldMatrix.multiply(lightSphereTranslation).multiply(lightSphereScale);
+
+    projectionMatrix.makePerspective(45, aspectRatio, 0.1, 1000);
+
+    // Render with flat color shader
+    gl.useProgram(flatColorShaderProgram);
+    gl.uniform4f(flatColorShaderProgram.uniforms.colorUniform, 1.0, 1.0, 1.0, 1.0); // white
+    lightSphereGeometry.render(camera, projectionMatrix, flatColorShaderProgram);
+
+    
     gl.useProgram(phongShaderProgram);
     const uniforms = phongShaderProgram.uniforms;
     const cameraPosition = camera.getPosition();
+
+    // Existing point light
     gl.uniform3f(uniforms.lightPositionUniform, rotatedLightPosition.x, rotatedLightPosition.y, rotatedLightPosition.z);
     gl.uniform3f(uniforms.cameraPositionUniform, cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-    projectionMatrix.makePerspective(45, aspectRatio, 0.1, 1000);
+    // Spotlight - fixed position above the scene pointing down
+    gl.uniform3f(uniforms.spotLightPositionUniform,  0.0, 8.0, 0.0);
+    gl.uniform3f(uniforms.spotLightDirectionUniform, 0.0, -1.0, 0.0);
+    gl.uniform1f(uniforms.innerLimitUniform, Math.cos(15 * Math.PI / 180));
+    gl.uniform1f(uniforms.outerLimitUniform, Math.cos(25 * Math.PI / 180));
+
+    // Spotlight points downward from its position toward the origin
+    // const spotDir = new Vector3(0, -1, 0); // adjust to taste
+
+    // gl.useProgram(spotShaderProgram);
+    // const su = spotShaderProgram.uniforms;
+    // gl.uniform3f(su.lightPositionUniform,  rotatedLightPosition.x, rotatedLightPosition.y, rotatedLightPosition.z);
+    // gl.uniform3f(su.cameraPositionUniform, cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    // gl.uniform3f(su.lightDirectionUniform, spotDir.x, spotDir.y, spotDir.z);
+    // gl.uniform1f(su.innerLimitUniform, Math.cos(15 * Math.PI / 180)); // 15 degree inner cone
+    // gl.uniform1f(su.outerLimitUniform, Math.cos(25 * Math.PI / 180)); // 25 degree outer cone
+
     groundGeometry.render(camera, projectionMatrix, phongShaderProgram);
     sphereGeometry.render(camera, projectionMatrix, phongShaderProgram);
+    barrelGeometry.render(camera, projectionMatrix, phongShaderProgram);
+
 }
